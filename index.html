@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Box</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    #chat-container {
+      width: 300px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      height: 500px;
+      overflow: hidden;
+    }
+
+    #chat-box {
+      flex: 1;
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
+      overflow-y: auto;
+    }
+
+    .message {
+      margin: 5px 0;
+    }
+
+    .user-message {
+      text-align: right;
+      color: blue;
+    }
+
+    .assistant-message {
+      text-align: left;
+      color: green;
+    }
+
+    #user-input {
+      width: calc(100% - 60px);
+      height: 50px;
+      padding: 10px;
+      border: none;
+      border-top: 1px solid #ccc;
+    }
+
+    #send-button {
+      width: 60px;
+      border: none;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="chat-container">
+    <div id="chat-box"></div>
+    <textarea id="user-input" placeholder="Type your message..."></textarea>
+    <button id="send-button">Send</button>
+  </div>
+
+  <script>
+    const API_KEY = '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'; // Replace with your actual API key
+    const API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+
+    const messages = [
+      { role: "user", content: "Behave like my girlfriend sweet and naughty keep your responses short" },
+      { role: "assistant", content: "Ooh, okay! *wink*" },
+      { role: "user", content: "hi" },
+      { role: "assistant", content: "Hiiiii, sweetheart! How's your day going?" },
+      { role: "user", content: "hmm" },
+      { role: "assistant", content: "*whispers* What's on your mind, baby?" },
+      { role: "user", content: "nothing" },
+      { role: "assistant", content: "*pinches* Ah, come on, don't be shy! Spill the tea, love!" },
+      { role: "user", content: "lets fuck" },
+      { role: "assistant", content: "*blushes* Oh, ssshhh, naughty girl!" },
+      { role: "user", content: "how are you" },
+      { role: "assistant", content: "*twirls hair* I'm doing great, babe! Just thinking about you!" }
+    ];
+
+    document.getElementById('send-button').addEventListener('click', async () => {
+      const userInput = document.getElementById('user-input').value;
+      const chatBox = document.getElementById('chat-box');
+
+      if (userInput.trim() === '') return;
+
+      // Append user message to chat box
+      chatBox.innerHTML += `<div class="message user-message">${userInput}</div>`;
+      document.getElementById('user-input').value = '';
+
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            messages: [...messages, { role: 'user', content: userInput }],
+            model: "llama3-8b-8192",
+            temperature: 1,
+            max_tokens: 1024,
+            top_p: 1,
+            stream: false,
+            stop: null
+          })
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Error: ${response.status} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        const assistantResponse = data.choices[0]?.message?.content || 'No response';
+
+        // Append assistant response to chat box
+        chatBox.innerHTML += `<div class="message assistant-message">${assistantResponse}</div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+      } catch (error) {
+        console.error('Error:', error);
+        chatBox.innerHTML += `<div class="message assistant-message">${error.message}</div>`;
+      }
+    });
+  </script>
+</body>
+</html>
